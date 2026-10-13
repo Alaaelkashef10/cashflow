@@ -1,9 +1,12 @@
+using CashFlow.Infrastructure;
+
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
