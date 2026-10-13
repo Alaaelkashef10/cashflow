@@ -2,57 +2,105 @@
 @owner = 11111111-1111-1111-1111-111111111111
 @other = 22222222-2222-2222-2222-222222222222
 
-### 1. Create a scenario  -> 201
-# @name createScenario
+### 1. Create scenario -> 201
+# @name scenario
 POST {{host}}/api/v1/scenarios
 X-Owner-Id: {{owner}}
 Content-Type: application/json
 
 {
-  "name": "Freelancer November",
+  "name": "Sara - November",
   "startingBalance": 1000,
   "startDate": "2026-11-01"
 }
 
-### 2. List my scenarios  -> 200
-GET {{host}}/api/v1/scenarios
-X-Owner-Id: {{owner}}
-
-### 3. Get the one I created  -> 200
-GET {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
-X-Owner-Id: {{owner}}
-
-### 4. Update the balance  -> 200 (startingBalance becomes 2500)
-PATCH {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+### 2. Add rent (bill on Nov 1) -> 201
+# @name rent
+POST {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/entries
 X-Owner-Id: {{owner}}
 Content-Type: application/json
 
 {
-  "startingBalance": 2500
+  "type": "Bill",
+  "description": "Rent",
+  "amount": 4000,
+  "date": "2026-11-01",
+  "category": "Rent"
 }
 
-### 5. Invalid input  -> 400 with a validation error for Name
-POST {{host}}/api/v1/scenarios
+### 3. Add client payment (income on Nov 5) -> 201
+# @name payment
+POST {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/entries
 X-Owner-Id: {{owner}}
 Content-Type: application/json
 
 {
-  "name": "",
-  "startingBalance": 1000,
-  "startDate": "2026-11-01"
+  "type": "Income",
+  "description": "Client payment",
+  "amount": 6000,
+  "date": "2026-11-05",
+  "category": "Salary/Client Payment"
 }
 
-### 6. Missing owner header  -> 400
-GET {{host}}/api/v1/scenarios
+### 4. List entries -> 200, two entries ordered by date
+GET {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/entries
+X-Owner-Id: {{owner}}
 
-### 7. Someone else's scenario  -> 404
-GET {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+### 5. Projection -> 200: warningDates Nov 1-4, lowest -3000 on Nov 1, ending 3000
+GET {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/projection
+X-Owner-Id: {{owner}}
+
+### 6. Move the rent to Nov 6 -> 200
+PATCH {{host}}/api/v1/entries/{{rent.response.body.$.id}}
+X-Owner-Id: {{owner}}
+Content-Type: application/json
+
+{
+  "date": "2026-11-06"
+}
+
+### 7. Projection again -> 200: no warnings, ending 3000
+GET {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/projection
+X-Owner-Id: {{owner}}
+
+### 8. Projection with a horizon -> 200, 10 days (Nov 1 to Nov 10)
+GET {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/projection?horizonEnd=2026-11-10
+X-Owner-Id: {{owner}}
+
+### 9. Invalid entry (amount 0, unknown category) -> 400
+POST {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/entries
+X-Owner-Id: {{owner}}
+Content-Type: application/json
+
+{
+  "type": "Bill",
+  "description": "Bad",
+  "amount": 0,
+  "date": "2026-11-02",
+  "category": "Nonsense"
+}
+
+### 10. Horizon before the start date -> 400
+GET {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/projection?horizonEnd=2026-10-01
+X-Owner-Id: {{owner}}
+
+### 11. Another owner lists my entries -> 404
+GET {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}/entries
 X-Owner-Id: {{other}}
 
-### 8. Delete  -> 204
-DELETE {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+### 12. Another owner edits my entry -> 404
+PATCH {{host}}/api/v1/entries/{{rent.response.body.$.id}}
+X-Owner-Id: {{other}}
+Content-Type: application/json
+
+{
+  "amount": 1
+}
+
+### 13. Delete the payment -> 204
+DELETE {{host}}/api/v1/entries/{{payment.response.body.$.id}}
 X-Owner-Id: {{owner}}
 
-### 9. Get after delete  -> 404
-GET {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+### 14. Delete the scenario (cleanup) -> 204
+DELETE {{host}}/api/v1/scenarios/{{scenario.response.body.$.id}}
 X-Owner-Id: {{owner}}

@@ -1,8 +1,8 @@
+using System.Text.Json.Serialization;
+
 using CashFlow.Api.Endpoints;
 using CashFlow.Api.Errors;
 using CashFlow.Infrastructure;
-using CashFlow.Api.Errors;
-
 
 using FluentValidation;
 
@@ -16,6 +16,9 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
@@ -41,6 +44,8 @@ app.MapHealthChecks("/health");
 var api = app.MapGroup("/api/v1");
 api.MapGet("/ping", () => TypedResults.Ok(new { message = "pong" }));
 api.MapScenarioEndpoints();
+api.MapEntryEndpoints();
+api.MapProjectionEndpoints();
 
 app.Run();
 
