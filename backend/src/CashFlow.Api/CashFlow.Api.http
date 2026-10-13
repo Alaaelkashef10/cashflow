@@ -1,6 +1,58 @@
-@CashFlow.Api_HostAddress = http://localhost:5095
+@host = https://localhost:7205
+@owner = 11111111-1111-1111-1111-111111111111
+@other = 22222222-2222-2222-2222-222222222222
 
-GET {{CashFlow.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Create a scenario  -> 201
+# @name createScenario
+POST {{host}}/api/v1/scenarios
+X-Owner-Id: {{owner}}
+Content-Type: application/json
 
-###
+{
+  "name": "Freelancer November",
+  "startingBalance": 1000,
+  "startDate": "2026-11-01"
+}
+
+### 2. List my scenarios  -> 200
+GET {{host}}/api/v1/scenarios
+X-Owner-Id: {{owner}}
+
+### 3. Get the one I created  -> 200
+GET {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+X-Owner-Id: {{owner}}
+
+### 4. Update the balance  -> 200 (startingBalance becomes 2500)
+PATCH {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+X-Owner-Id: {{owner}}
+Content-Type: application/json
+
+{
+  "startingBalance": 2500
+}
+
+### 5. Invalid input  -> 400 with a validation error for Name
+POST {{host}}/api/v1/scenarios
+X-Owner-Id: {{owner}}
+Content-Type: application/json
+
+{
+  "name": "",
+  "startingBalance": 1000,
+  "startDate": "2026-11-01"
+}
+
+### 6. Missing owner header  -> 400
+GET {{host}}/api/v1/scenarios
+
+### 7. Someone else's scenario  -> 404
+GET {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+X-Owner-Id: {{other}}
+
+### 8. Delete  -> 204
+DELETE {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+X-Owner-Id: {{owner}}
+
+### 9. Get after delete  -> 404
+GET {{host}}/api/v1/scenarios/{{createScenario.response.body.$.id}}
+X-Owner-Id: {{owner}}
