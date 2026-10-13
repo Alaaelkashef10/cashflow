@@ -16,6 +16,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -46,6 +47,7 @@ api.MapGet("/ping", () => TypedResults.Ok(new { message = "pong" }));
 api.MapScenarioEndpoints();
 api.MapEntryEndpoints();
 api.MapProjectionEndpoints();
+api.MapSampleEndpoints();
 
 app.Run();
 
