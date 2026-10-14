@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ownerHeader } from './client'
 import { toApiError } from './errors'
 import type { components } from './schema'
@@ -145,5 +145,24 @@ export function useDeleteEntry() {
       if (error) throw toApiError(error)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: scenariosKey }),
+  })
+}
+
+export function useProjection(scenarioId: number, horizonEnd: string) {
+  return useQuery({
+    queryKey: ['scenarios', scenarioId, 'projection', horizonEnd],
+    enabled: Number.isInteger(scenarioId),
+    placeholderData: keepPreviousData, // no flicker while the projection refreshes
+    queryFn: async () => {
+      const { data, error } = await api.GET('/api/v1/scenarios/{id}/projection', {
+        params: {
+          path: { id: scenarioId },
+          query: horizonEnd ? { horizonEnd } : {},
+          header: ownerHeader(),
+        },
+      })
+      if (error || !data) throw toApiError(error)
+      return data
+    },
   })
 }

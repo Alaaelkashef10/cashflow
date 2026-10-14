@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useDeleteEntry, useEntries, useScenario } from '../api/hooks'
 import EntryForm from '../components/EntryForm'
+import ProjectionSection from '../components/ProjectionSection'
 import { formatAmount } from '../format'
 
 export default function ScenarioPage() {
@@ -37,8 +38,9 @@ export default function ScenarioPage() {
             <p className="mt-1 text-sm text-slate-600">
               Starts {scenario.data.startDate} · starting balance {formatAmount(scenario.data.startingBalance)}
             </p>
-            <p className="mt-3 text-sm text-slate-500">The calendar and projection will appear here next.</p>
           </div>
+
+          <ProjectionSection scenarioId={scenarioId} startDate={scenario.data.startDate} />
 
           <section>
             <h3 className="text-lg font-semibold">Add an entry</h3>

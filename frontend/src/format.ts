@@ -5,3 +5,10 @@ export function formatAmount(value: number | string): string {
     maximumFractionDigits: 2,
   })
 }
+
+export function formatCompact(value: number | string): string {
+  return Number(value).toLocaleString('en-US', {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  })
+}
