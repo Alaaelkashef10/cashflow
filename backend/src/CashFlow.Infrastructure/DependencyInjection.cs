@@ -1,4 +1,5 @@
-﻿using CashFlow.Core.Projection;
+﻿using CashFlow.Core.Categorization;
+using CashFlow.Core.Projection;
 using CashFlow.Infrastructure.Persistence;
 
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ public static class DependencyInjection
             options.UseNpgsql(configuration.GetConnectionString("Default")));
 
         services.AddSingleton<IProjectionService, ProjectionService>();
+        services.AddSingleton<ICategorizer, KeywordCategorizer>();
 
         return services;
     }

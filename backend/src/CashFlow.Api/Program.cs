@@ -1,10 +1,13 @@
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 using CashFlow.Api.Endpoints;
 using CashFlow.Api.Errors;
 using CashFlow.Infrastructure;
 
 using FluentValidation;
+
+using Microsoft.AspNetCore.RateLimiting;
 
 using Scalar.AspNetCore;
 
@@ -20,6 +23,20 @@ builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("categorize", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
@@ -39,6 +56,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("frontend");
+app.UseRateLimiter();
 
 app.MapHealthChecks("/health");
 
@@ -48,6 +66,7 @@ api.MapScenarioEndpoints();
 api.MapEntryEndpoints();
 api.MapProjectionEndpoints();
 api.MapSampleEndpoints();
+api.MapCategorizeEndpoints();
 
 app.Run();
 

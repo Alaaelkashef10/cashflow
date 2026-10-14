@@ -90,6 +90,35 @@
         }
       }
     },
+    "/api/v1/categorize": {
+      "post": {
+        "tags": [
+          "Categorize"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategorizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategorizeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/scenarios": {
       "get": {
         "tags": [
@@ -553,6 +582,41 @@
           }
         }
       },
+      "CategorizeRequest": {
+        "required": [
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "CategorizeResponse": {
+        "required": [
+          "category",
+          "confidence",
+          "source"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "confidence": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?(?:[eE][+-]?\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      },
       "CreateEntryRequest": {
         "required": [
           "type",
@@ -1013,6 +1077,9 @@
     },
     {
       "name": "Projection"
+    },
+    {
+      "name": "Categorize"
     },
     {
       "name": "Scenarios"

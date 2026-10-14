@@ -1,0 +1,121 @@
+split,description,category
+train,Apartment rent,Rent
+train,November rent,Rent
+train,Landlord payment,Rent
+train,Studio lease,Rent
+train,Rent,Rent
+train,Rental for the villa,Rent
+train,Housing rent,Rent
+train,Electric bill,Utilities
+train,Water bill,Utilities
+train,Gas bill,Utilities
+train,Internet bill,Utilities
+train,Phone bill,Utilities
+train,Trash collection,Utilities
+train,Broadband,Utilities
+train,Netflix monthly,Subscriptions
+train,Spotify,Subscriptions
+train,YouTube Premium,Subscriptions
+train,Disney Plus,Subscriptions
+train,ChatGPT Plus,Subscriptions
+train,Adobe Creative Cloud,Subscriptions
+train,Monthly subscription,Subscriptions
+train,Groceries,Groceries
+train,Carrefour run,Groceries
+train,Supermarket,Groceries
+train,Fruit and vegetables,Groceries
+train,Bread and eggs,Groceries
+train,Spinneys,Groceries
+train,Butcher,Groceries
+train,Uber ride,Transport
+train,Careem,Transport
+train,Taxi,Transport
+train,Bus fare,Transport
+train,Fuel,Transport
+train,Gasoline,Transport
+train,Parking,Transport
+train,Loan installment,Loans/Installments
+train,Credit card bill,Loans/Installments
+train,Car installment,Loans/Installments
+train,Bank loan,Loans/Installments
+train,Debt repayment,Loans/Installments
+train,Valu installment,Loans/Installments
+train,Personal loan,Loans/Installments
+train,Salary,Salary/Client Payment
+train,Paycheck,Salary/Client Payment
+train,Client payment,Salary/Client Payment
+train,Freelance project,Salary/Client Payment
+train,Invoice paid,Salary/Client Payment
+train,Monthly wages,Salary/Client Payment
+train,Fiverr payout,Salary/Client Payment
+train,Refund,Other Income
+train,Cashback,Other Income
+train,Sold old phone,Other Income
+train,Gift from friend,Other Income
+train,Dividends,Other Income
+train,Rental income,Other Income
+train,Reimbursement,Other Income
+train,Restaurant,Other Expense
+train,Coffee,Other Expense
+train,Doctor visit,Other Expense
+train,Cinema tickets,Other Expense
+train,Clothes,Other Expense
+train,Birthday present,Other Expense
+train,Laundry,Other Expense
+train,Misc,Uncategorized
+train,Other,Uncategorized
+train,Random,Uncategorized
+train,Something,Uncategorized
+train,???,Uncategorized
+train,Unknown,Uncategorized
+train,n/a,Uncategorized
+test,Monthly apartment rent,Rent
+test,Landlord transfer,Rent
+test,Office space lease payment,Rent
+test,Room rent for November,Rent
+test,Monthly payment to Mr Hassan for the flat,Rent
+test,Electricity bill,Utilities
+test,Water and gas,Utilities
+test,Home wifi,Utilities
+test,Mobile phone bill,Utilities
+test,Vodafone recharge,Utilities
+test,Netflix,Subscriptions
+test,Spotify family plan,Subscriptions
+test,Gym membership,Subscriptions
+test,iCloud storage,Subscriptions
+test,Duolingo Super,Subscriptions
+test,Weekly supermarket shopping,Groceries
+test,Carrefour,Groceries
+test,Vegetables and fruit,Groceries
+test,Bakery bread and milk,Groceries
+test,Food shopping,Groceries
+test,Uber to work,Transport
+test,Petrol,Transport
+test,Monthly metro pass,Transport
+test,Train ticket to Alexandria,Transport
+test,Tuk tuk to the station,Transport
+test,Car loan payment,Loans/Installments
+test,Phone installment,Loans/Installments
+test,Credit card payment,Loans/Installments
+test,Student loan,Loans/Installments
+test,Mortgage,Loans/Installments
+test,Monthly salary,Salary/Client Payment
+test,Invoice 1042 paid by client,Salary/Client Payment
+test,Freelance design project,Salary/Client Payment
+test,Consulting fee,Salary/Client Payment
+test,Wire from Acme Ltd for the website,Salary/Client Payment
+test,Tax refund,Other Income
+test,Cashback,Other Income
+test,Sold old laptop,Other Income
+test,Gift from uncle,Other Income
+test,Mom sent some money,Other Income
+test,Haircut,Other Expense
+test,Dinner with friends,Other Expense
+test,Pharmacy,Other Expense
+test,New shoes,Other Expense
+test,Plumber repair,Other Expense
+test,misc,Uncategorized
+test,stuff,Uncategorized
+test,asdf,Uncategorized
+test,payment,Uncategorized
+test,transfer,Uncategorized
