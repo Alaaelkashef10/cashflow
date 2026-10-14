@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "api:generate": "npx --yes openapi-typescript ../docs/openapi.json -o src/api/schema.d.ts"
+    "api:generate": "npx --yes openapi-typescript ../docs/openapi.json -o src/api/schema.d.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
