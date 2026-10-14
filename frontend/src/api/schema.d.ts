@@ -96,6 +96,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/categorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["CategorizeRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["CategorizeResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/scenarios": {
         parameters: {
             query?: never;
@@ -511,6 +550,15 @@ export interface components {
     schemas: {
         AnonymousTypeOfstring: {
             message: null | string;
+        };
+        CategorizeRequest: {
+            description: string;
+        };
+        CategorizeResponse: {
+            category: string;
+            /** Format: double */
+            confidence: number | string;
+            source: string;
         };
         CreateEntryRequest: {
             type: components["schemas"]["EntryType"];

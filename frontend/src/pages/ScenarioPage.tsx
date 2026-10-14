@@ -88,6 +88,15 @@ export default function ScenarioPage() {
                       <span className="block truncate font-medium">{entry.description}</span>
                       <span className="block text-sm text-slate-600">
                         {entry.date} · {entry.category}
+                        {entry.userCorrected && entry.aiSuggestedCategory && (
+                          <span className="text-amber-700">
+                            {' '}
+                            · AI suggested {entry.aiSuggestedCategory}, you changed it
+                          </span>
+                        )}
+                        {!entry.userCorrected && entry.aiSuggestedCategory && (
+                          <span className="text-green-700"> · AI suggestion accepted</span>
+                        )}
                       </span>
                     </div>
                     <span className={isIncome ? 'font-medium text-green-700' : 'font-medium text-red-700'}>

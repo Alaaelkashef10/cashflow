@@ -166,3 +166,15 @@ export function useProjection(scenarioId: number, horizonEnd: string) {
     },
   })
 }
+
+export function useCategorize() {
+  return useMutation({
+    mutationFn: async (description: string) => {
+      const { data, error } = await api.POST('/api/v1/categorize', {
+        body: { description },
+      })
+      if (error || !data) throw toApiError(error)
+      return data
+    },
+  })
+}

@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { components } from '../api/schema'
-import { useCreateEntry, useUpdateEntry } from '../api/hooks'
+import { useCategorize, useCreateEntry, useUpdateEntry } from '../api/hooks'
 import { fieldErrors, generalMessage } from '../api/errors'
 import { CATEGORIES } from '../categories'
 
 type Entry = components['schemas']['EntryResponse']
+
+type Suggestion = {
+  category: string
+  confidence: number
+  source: string
+  forText: string
+}
 
 type Props = {
   scenarioId: number
@@ -23,19 +30,67 @@ function FieldErrors({ messages }: { messages: string[] }) {
   return <p className="mt-1 text-sm text-red-700">{messages.join(' ')}</p>
 }
 
+function sourceLabel(source: string) {
+  return source === 'keyword' ? 'keyword rules' : source
+}
+
 export default function EntryForm({ scenarioId, defaultDate, entry, onDone, onCancel }: Props) {
   const create = useCreateEntry(scenarioId)
   const update = useUpdateEntry()
+  const categorize = useCategorize()
 
   const [type, setType] = useState<Entry['type']>(entry?.type ?? 'Bill')
   const [description, setDescription] = useState(entry?.description ?? '')
   const [amount, setAmount] = useState(entry ? String(entry.amount) : '')
   const [date, setDate] = useState(entry?.date ?? defaultDate)
   const [category, setCategory] = useState<string>(entry?.category ?? 'Uncategorized')
+  const [suggestion, setSuggestion] = useState<Suggestion | null>(null)
+
+  // Refs hold values that the delayed callback needs to read at the moment it runs.
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const latestText = useRef('')
+  const categoryTouched = useRef(false)
+
+  useEffect(() => () => clearTimeout(timer.current), [])
 
   const error = entry ? update.error : create.error
   const isPending = entry ? update.isPending : create.isPending
   const general = generalMessage(error)
+  const idSuffix = entry?.id ?? 'new'
+
+  function handleDescriptionChange(value: string) {
+    setDescription(value)
+    if (entry) return // suggestions are only for new entries
+
+    const text = value.trim()
+    latestText.current = text
+    clearTimeout(timer.current)
+
+    if (text.length < 3) {
+      setSuggestion(null)
+      return
+    }
+
+    timer.current = setTimeout(() => {
+      categorize.mutate(text, {
+        onSuccess: (result) => {
+          if (latestText.current !== text) return // the user kept typing; ignore the old answer
+          setSuggestion({
+            category: result.category,
+            confidence: Number(result.confidence),
+            source: result.source,
+            forText: text,
+          })
+          if (!categoryTouched.current) setCategory(result.category)
+        },
+      })
+    }, 400)
+  }
+
+  function handleCategoryChange(value: string) {
+    categoryTouched.current = true
+    setCategory(value)
+  }
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -43,27 +98,39 @@ export default function EntryForm({ scenarioId, defaultDate, entry, onDone, onCa
 
     if (entry) {
       update.mutate({ id: Number(entry.id), body }, { onSuccess: () => onDone?.() })
-    } else {
-      create.mutate(
-        { ...body, aiSuggestedCategory: null },
-        {
-          onSuccess: () => {
-            setDescription('')
-            setAmount('')
-            onDone?.()
-          },
-        },
-      )
+      return
     }
+
+    // Send the AI's suggestion only if it belongs to the description as it is now.
+    const aiSuggestedCategory =
+      suggestion && suggestion.forText === description.trim() ? suggestion.category : null
+
+    create.mutate(
+      { ...body, aiSuggestedCategory },
+      {
+        onSuccess: () => {
+          clearTimeout(timer.current)
+          latestText.current = ''
+          categoryTouched.current = false
+          setDescription('')
+          setAmount('')
+          setCategory('Uncategorized')
+          setSuggestion(null)
+          onDone?.()
+        },
+      },
+    )
   }
+
+  const hasUsefulSuggestion = suggestion !== null && suggestion.category !== 'Uncategorized'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-slate-200 bg-white p-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium" htmlFor={`type-${entry?.id ?? 'new'}`}>Type</label>
+          <label className="block text-sm font-medium" htmlFor={`type-${idSuffix}`}>Type</label>
           <select
-            id={`type-${entry?.id ?? 'new'}`}
+            id={`type-${idSuffix}`}
             className={inputClass}
             value={type}
             onChange={(e) => setType(e.target.value as Entry['type'])}
@@ -73,20 +140,22 @@ export default function EntryForm({ scenarioId, defaultDate, entry, onDone, onCa
           </select>
           <FieldErrors messages={fieldErrors(error, 'type')} />
         </div>
+
         <div>
-          <label className="block text-sm font-medium" htmlFor={`desc-${entry?.id ?? 'new'}`}>Description</label>
+          <label className="block text-sm font-medium" htmlFor={`desc-${idSuffix}`}>Description</label>
           <input
-            id={`desc-${entry?.id ?? 'new'}`}
+            id={`desc-${idSuffix}`}
             className={inputClass}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => handleDescriptionChange(e.target.value)}
           />
           <FieldErrors messages={fieldErrors(error, 'description')} />
         </div>
+
         <div>
-          <label className="block text-sm font-medium" htmlFor={`amount-${entry?.id ?? 'new'}`}>Amount</label>
+          <label className="block text-sm font-medium" htmlFor={`amount-${idSuffix}`}>Amount</label>
           <input
-            id={`amount-${entry?.id ?? 'new'}`}
+            id={`amount-${idSuffix}`}
             type="number"
             step="0.01"
             className={inputClass}
@@ -95,10 +164,11 @@ export default function EntryForm({ scenarioId, defaultDate, entry, onDone, onCa
           />
           <FieldErrors messages={fieldErrors(error, 'amount')} />
         </div>
+
         <div>
-          <label className="block text-sm font-medium" htmlFor={`date-${entry?.id ?? 'new'}`}>Date</label>
+          <label className="block text-sm font-medium" htmlFor={`date-${idSuffix}`}>Date</label>
           <input
-            id={`date-${entry?.id ?? 'new'}`}
+            id={`date-${idSuffix}`}
             type="date"
             className={inputClass}
             value={date}
@@ -106,19 +176,44 @@ export default function EntryForm({ scenarioId, defaultDate, entry, onDone, onCa
           />
           <FieldErrors messages={fieldErrors(error, 'date')} />
         </div>
+
         <div className="sm:col-span-2">
-          <label className="block text-sm font-medium" htmlFor={`cat-${entry?.id ?? 'new'}`}>Category</label>
+          <label className="block text-sm font-medium" htmlFor={`cat-${idSuffix}`}>Category</label>
           <select
-            id={`cat-${entry?.id ?? 'new'}`}
+            id={`cat-${idSuffix}`}
             className={inputClass}
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => handleCategoryChange(e.target.value)}
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
           <FieldErrors messages={fieldErrors(error, 'category')} />
+
+          {!entry && (
+            <p className="mt-2 text-sm text-slate-600" aria-live="polite">
+              {categorize.isPending && 'Looking for a suggestion...'}
+              {!categorize.isPending && hasUsefulSuggestion && (
+                <>
+                  Suggested: <strong>{suggestion.category}</strong> ({sourceLabel(suggestion.source)},{' '}
+                  {Math.round(suggestion.confidence * 100)}% confidence).{' '}
+                  {category !== suggestion.category && (
+                    <button
+                      type="button"
+                      onClick={() => setCategory(suggestion.category)}
+                      className="font-medium text-slate-900 underline"
+                    >
+                      Use suggestion
+                    </button>
+                  )}
+                </>
+              )}
+              {!categorize.isPending && suggestion && !hasUsefulSuggestion && (
+                <>No suggestion for this description. Please choose a category.</>
+              )}
+            </p>
+          )}
         </div>
       </div>
 
