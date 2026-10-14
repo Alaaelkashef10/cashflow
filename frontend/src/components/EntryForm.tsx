@@ -31,7 +31,9 @@ function FieldErrors({ messages }: { messages: string[] }) {
 }
 
 function sourceLabel(source: string) {
-  return source === 'keyword' ? 'keyword rules' : source
+  if (source === 'keyword') return 'keyword rules'
+  if (source === 'llm') return 'AI model'
+  return source
 }
 
 export default function EntryForm({ scenarioId, defaultDate, entry, onDone, onCancel }: Props) {

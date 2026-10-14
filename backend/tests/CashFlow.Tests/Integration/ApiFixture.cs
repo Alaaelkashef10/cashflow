@@ -29,6 +29,7 @@ public sealed class ApiFixture : IAsyncLifetime
 
         // Environment variables override user-secrets, so tests never touch your dev database.
         Environment.SetEnvironmentVariable("ConnectionStrings__Default", _db.GetConnectionString());
+        Environment.SetEnvironmentVariable("Ai__Provider", "keyword");
 
         _factory = new WebApplicationFactory<Program>();
 
