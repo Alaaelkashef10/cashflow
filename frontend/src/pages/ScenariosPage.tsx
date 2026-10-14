@@ -8,8 +8,9 @@ import {
   useSamples,
   useScenarios,
 } from '../api/hooks'
-import { fieldErrors } from '../api/errors'
 import { formatAmount } from '../format'
+import { fieldErrors, generalMessage } from '../api/errors'
+
 
 const inputClass =
   'mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-slate-500 focus:outline-none'
@@ -119,8 +120,8 @@ export default function ScenariosPage() {
               <FieldErrors messages={fieldErrors(formError, 'startDate')} />
             </div>
           </div>
-          {formError && Object.keys((formError as { errors?: object }).errors ?? {}).length === 0 && (
-            <p className="text-sm text-red-700">{formError.message}</p>
+          {generalMessage(formError) && (
+            <p className="text-sm text-red-700">{generalMessage(formError)}</p>
           )}
           <button
             type="submit"

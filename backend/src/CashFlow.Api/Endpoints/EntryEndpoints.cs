@@ -1,5 +1,6 @@
 ﻿using CashFlow.Api.Contracts;
 using CashFlow.Api.Validation;
+using CashFlow.Core;
 using CashFlow.Core.Entities;
 using CashFlow.Infrastructure.Persistence;
 
@@ -44,7 +45,7 @@ public static class EntryEndpoints
         return TypedResults.Ok(items.Select(EntryMapper.ToResponse).ToList());
     }
 
-    private static async Task<Results<Created<EntryResponse>, NotFound>> CreateAsync(
+    private static async Task<Results<Created<EntryResponse>, NotFound, ValidationProblem>> CreateAsync(
         int scenarioId,
         [FromHeader(Name = OwnerHeader)] Guid ownerId,
         CreateEntryRequest request,
@@ -53,6 +54,15 @@ public static class EntryEndpoints
     {
         var owns = await db.Scenarios.AnyAsync(s => s.Id == scenarioId && s.OwnerId == ownerId, ct);
         if (!owns) return TypedResults.NotFound();
+
+        var count = await db.Entries.CountAsync(e => e.ScenarioId == scenarioId, ct);
+        if (count >= Limits.MaxEntriesPerScenario)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = [$"A scenario can have at most {Limits.MaxEntriesPerScenario} entries."]
+            });
+        }
 
         var entry = new Entry
         {

@@ -13,6 +13,9 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Requests here are tiny JSON bodies. Reject anything larger than 64 KB.
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 64 * 1024);
+
 builder.Services.AddOpenApi();
 builder.Services.AddHealthChecks();
 builder.Services.AddProblemDetails();
@@ -45,6 +48,19 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// First in the pipeline, so every response (including errors) carries these headers.
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+    headers["X-Content-Type-Options"] = "nosniff";
+    headers["X-Frame-Options"] = "DENY";
+    headers["Referrer-Policy"] = "no-referrer";
+    if (!app.Environment.IsDevelopment())
+        headers["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'";
+
+    await next();
+});
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
@@ -52,6 +68,10 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+}
+else
+{
+    app.UseHsts();
 }
 
 app.UseHttpsRedirection();

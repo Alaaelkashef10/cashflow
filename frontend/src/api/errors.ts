@@ -11,7 +11,8 @@ export function toApiError(error: unknown): ApiError {
   const e = error as
     | { title?: string; detail?: string; errors?: Record<string, string[]> }
     | undefined
-  return new ApiError(e?.detail ?? e?.title ?? 'Request failed', e?.errors)
+  const general = e?.errors?.['']?.join(' ')
+  return new ApiError(e?.detail ?? general ?? e?.title ?? 'Request failed', e?.errors)
 }
 
 export function fieldErrors(error: unknown, field: string): string[] {
@@ -22,6 +23,8 @@ export function fieldErrors(error: unknown, field: string): string[] {
 export function generalMessage(error: unknown): string | null {
   if (!error) return null
   if (error instanceof ApiError) {
+    const general = error.errors['']?.join(' ')
+    if (general) return general
     return Object.keys(error.errors).length === 0 ? error.message : null
   }
   return error instanceof Error ? error.message : 'Request failed'

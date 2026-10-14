@@ -1,9 +1,11 @@
 ﻿using CashFlow.Api.Contracts;
+using CashFlow.Core;
 using CashFlow.Core.Samples;
 using CashFlow.Infrastructure.Persistence;
 
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CashFlow.Api.Endpoints;
 
@@ -22,7 +24,7 @@ public static class SampleEndpoints
             .Select(s => new SampleInfo(s.Key, s.Name, s.Description))
             .ToList());
 
-    private static async Task<Results<Created<ScenarioResponse>, NotFound>> CreateAsync(
+    private static async Task<Results<Created<ScenarioResponse>, NotFound, ValidationProblem>> CreateAsync(
         string key,
         [FromHeader(Name = "X-Owner-Id")] Guid ownerId,
         AppDbContext db,
@@ -31,6 +33,15 @@ public static class SampleEndpoints
     {
         var sample = SampleCatalog.Find(key);
         if (sample is null) return TypedResults.NotFound();
+
+        var count = await db.Scenarios.CountAsync(s => s.OwnerId == ownerId, ct);
+        if (count >= Limits.MaxScenariosPerOwner)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = [$"You can have at most {Limits.MaxScenariosPerOwner} scenarios. Delete one to add another."]
+            });
+        }
 
         // Samples start on the first day of next month.
         var today = DateOnly.FromDateTime(time.GetUtcNow().UtcDateTime);

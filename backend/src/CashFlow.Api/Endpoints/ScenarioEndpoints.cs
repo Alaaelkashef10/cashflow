@@ -1,5 +1,6 @@
 ﻿using CashFlow.Api.Contracts;
 using CashFlow.Api.Validation;
+using CashFlow.Core;
 using CashFlow.Core.Entities;
 using CashFlow.Infrastructure.Persistence;
 
@@ -57,12 +58,21 @@ public static class ScenarioEndpoints
         return TypedResults.Ok(item);
     }
 
-    private static async Task<Created<ScenarioResponse>> CreateAsync(
+    private static async Task<Results<Created<ScenarioResponse>, ValidationProblem>> CreateAsync(
         [FromHeader(Name = OwnerHeader)] Guid ownerId,
         CreateScenarioRequest request,
         AppDbContext db,
         CancellationToken ct)
     {
+        var count = await db.Scenarios.CountAsync(s => s.OwnerId == ownerId, ct);
+        if (count >= Limits.MaxScenariosPerOwner)
+        {
+            return TypedResults.ValidationProblem(new Dictionary<string, string[]>
+            {
+                [""] = [$"You can have at most {Limits.MaxScenariosPerOwner} scenarios. Delete one to add another."]
+            });
+        }
+
         var scenario = new Scenario
         {
             OwnerId = ownerId,
