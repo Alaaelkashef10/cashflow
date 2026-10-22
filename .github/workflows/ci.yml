@@ -67,6 +67,7 @@ jobs:
       - run: dotnet dev-certs https
       - run: dotnet tool install --global dotnet-ef
       - run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - run: dotnet restore backend/CashFlow.slnx
       - name: Create the database tables
         run: dotnet ef database update --project backend/src/CashFlow.Infrastructure --startup-project backend/src/CashFlow.Api
       - run: npm ci
