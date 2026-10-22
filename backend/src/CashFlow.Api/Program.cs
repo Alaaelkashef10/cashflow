@@ -4,10 +4,12 @@ using System.Threading.RateLimiting;
 using CashFlow.Api.Endpoints;
 using CashFlow.Api.Errors;
 using CashFlow.Infrastructure;
+using CashFlow.Infrastructure.Persistence;
 
 using FluentValidation;
 
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 using Scalar.AspNetCore;
 
@@ -48,6 +50,14 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// In the cloud, create or update the database tables when the app starts.
+// Switched on with the setting Database:MigrateOnStartup=true (environment variable Database__MigrateOnStartup).
+if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+}
+
 // First in the pipeline, so every response (including errors) carries these headers.
 app.Use(async (context, next) =>
 {
@@ -68,13 +78,14 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+    app.UseHttpsRedirection();
 }
 else
 {
+    // In the cloud, the platform's proxy handles HTTPS before requests reach the container.
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
 app.UseCors("frontend");
 app.UseRateLimiter();
 
