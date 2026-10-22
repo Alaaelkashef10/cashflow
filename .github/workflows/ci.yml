@@ -33,3 +33,53 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    env:
+      ConnectionStrings__Default: Host=localhost;Port=5432;Database=cashflow;Username=cashflow;Password=cashflow_dev
+      VITE_API_URL: https://localhost:7205
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: cashflow
+          POSTGRES_PASSWORD: cashflow_dev
+          POSTGRES_DB: cashflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cashflow -d cashflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: dotnet dev-certs https
+      - run: dotnet tool install --global dotnet-ef
+      - run: echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+      - name: Create the database tables
+        run: dotnet ef database update --project backend/src/CashFlow.Infrastructure --startup-project backend/src/CashFlow.Api
+      - run: npm ci
+        working-directory: frontend
+      - run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - run: npm run e2e
+        working-directory: frontend
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+          retention-days: 7
