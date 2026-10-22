@@ -38,7 +38,7 @@ describe('CalendarGrid', () => {
 
     expect(warning).toHaveAccessibleName(/Projected balance -3,000\.00\. Warning: below zero\./)
     expect(normal).toHaveAccessibleName(/Projected balance 3,000\.00\./)
-    expect(normal.getAttribute('aria-label')).not.toContain('Warning')
+        expect(normal).not.toHaveAccessibleName(/Warning/)
   })
 
   it('reports which day was clicked', async () => {
